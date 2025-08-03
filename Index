@@ -11,8 +11,6 @@
       padding: 20px;
       background: #b0d6f1;
       color: #111;
-      background-image: url('https://i.imgur.com/0C6WhlP.png'), url('https://i.imgur.com/TiADN1q.png'), url('https://i.imgur.com/XLmVYjA.png'); /* body outline, question mark, glasses */
-      background-repeat: no-repeat, no-repeat, no-repeat;
       background-position: bottom right, center top, left center;
       background-size: 250px, 120px, 150px;
       background-size: cover;
