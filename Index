@@ -11,10 +11,6 @@
       padding: 20px;
       background: #b0d6f1;
       color: #111;
-      background-position: bottom right, center top, left center;
-      background-size: 250px, 120px, 150px;
-      background-size: cover;
-      background-attachment: fixed;
     }
     h1, h2 {
       color: #002244;
