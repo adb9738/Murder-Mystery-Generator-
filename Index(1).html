@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Murder Mystery Generator - Character Creation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Spectral+SC:wght@600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Spectral SC', serif;
+      padding: 20px;
+      background: #b0d6f1;
+      color: #111;
+      background-image: url('https://i.imgur.com/0C6WhlP.png'), url('https://i.imgur.com/TiADN1q.png'), url('https://i.imgur.com/XLmVYjA.png'); /* body outline, question mark, glasses */
+      background-repeat: no-repeat, no-repeat, no-repeat;
+      background-position: bottom right, center top, left center;
+      background-size: 250px, 120px, 150px;
+      background-size: cover;
+      background-attachment: fixed;
+    }
+    h1, h2 {
+      color: #002244;
+      text-shadow: 1px 1px 3px #000;
+    }
+    button {
+      padding: 10px 15px;
+      background: #ff3366;
+      color: white;
+      border: none;
+      margin-top: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    }
+    button:disabled {
+      background: #661122;
+      cursor: not-allowed;
+    }
+    .section {
+      margin-top: 20px;
+      background-color: rgba(255,255,255,0.8);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      background: #f0f4fa;
+      color: #111;
+      border: 1px solid #555;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    hr {
+      border: 0;
+      border-top: 1px solid #444;
+      margin: 20px 0;
+    }
+    .player-block {
+      border: 1px solid #444;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      background: rgba(34,34,34,0.8);
+    }
+  </style>
+</head>
+<body>
+  <h1>Murder Mystery Generator</h1>
+
+  <div class="section">
+  <h2>Customize Characters (Up to 6 players)</h2>
+  <form id="characterForm">
+    <div id="playerInputs"></div>
+    <button type="button" id="addPlayerBtn">Add Player</button>
+    <button type="button" onclick="generateCustomMystery()">Generate Mystery</button>
+  </form>
+</div>
+
+<div id="output" class="section"></div>
+<button onclick="downloadPDF()">Download as PDF</button>
+
+<script>
+  const personalityTraits = [
+    "Charismatic but manipulative",
+    "Quiet and observant",
+    "Hot-headed and impulsive",
+    "Calm under pressure",
+    "Secretive and paranoid",
+    "Always smiling but emotionally distant",
+    "Generous in public, ruthless in private"
+  ];
+
+  const victims = [
+    { name: "Ren Tanaka", age: 38, gender: "Male", job: "Music Producer", relation: "Former employer", notes: "Ruined careers and made enemies in Tokyo before escaping to Shimane." },
+    { name: "Naoko Saito", age: 45, gender: "Female", job: "Cruise Director", relation: "Boss or romantic rival", notes: "Was involved in a scandal with a passenger on a previous voyage." },
+    { name: "Hideo Kobayashi", age: 62, gender: "Male", job: "Innkeeper", relation: "Landlord, estranged father, or employer", notes: "Once accused of hiding contraband inside the inn walls." },
+    { name: "Mika Fujimoto", age: 29, gender: "Female", job: "CEO", relation: "Coworker or former friend", notes: "Fired half the team last quarter and was about to go public with the company." },
+    { name: "Sho Yamamoto", age: 50, gender: "Male", job: "Building Manager", relation: "Tenant rival, former lover", notes: "Collected dirt on residents and was allegedly extorting one of them." },
+    { name: "Rika Tanabe", age: 34, gender: "Female", job: "Grocery Store Assistant Manager", relation: "Co-worker, ex-fiancé", notes: "Had just won a big payout in a whistleblower case against the store's owner." }
+  ];
+
+  const settings = [
+    "Karaoke bar in Shimane, Japan",
+    "Luxury cruise ship",
+    "Remote mountain inn",
+    "Tech startup office",
+    "Himawari Apartment Building",
+    "Prile Grocery Store"
+  ];
+
+  const backstories = {
+    "Karaoke bar in Shimane, Japan": "Ren Tanaka, once a big-city music producer, fled Tokyo after a scandal ruined his career. He started this karaoke bar as a quiet escape—but someone from his past has followed him here.",
+    "Luxury cruise ship": "The victim was the cruise director, found dead in their suite before the evening gala. The ship is isolated, and one of the guests—or crew—must be the killer.",
+    "Remote mountain inn": "An early snowstorm trapped everyone inside the inn. The victim was the reclusive owner, who had secrets buried deep in the walls—literally.",
+    "Tech startup office": "The company's CEO was found dead during an overnight hackathon. Betrayal and blackmail run through the team like code bugs nobody wants to fix.",
+    "Himawari Apartment Building": "The building manager is found in the parking lot. There are keys to apartments 1, 7, and 9 in his pocket.",
+    "Prile Grocery Store": "Lightning struck just as the lights went out. When they came back on, there was a body in the meat and produce section."
+  };
+
+  const cluePool = {
+    general: [
+      "Autopsy: Strangled, no signs of struggle.",
+      "Lipstick on mic cord matches someone's shade.",
+      "USB drive wiped clean.",
+      "Threatening note on song request slip.",
+      "Sound booth log: 3 entries in 30 mins.",
+      "Victim's phone is missing.",
+      "Victim's bank accounts have been emptied.",
+      "Size 8 footprint covered in blood found near the body.",
+      "Partial voice memo: 'If I go down... so do you.'"
+    ],
+    traits: {
+      "Hot-headed and impulsive": ["Someone was overheard yelling at the victim earlier that day.", "The karaoke mic was dented like it had been thrown."],
+      "Secretive and paranoid": ["A hidden camera was found behind a mirror.", "Journal entries mention fear of being followed."],
+      "Charismatic but manipulative": ["The victim’s messages hint at blackmail.", "Someone reported feeling pressured to lie for them."]
+    },
+    victims: {
+      "Ren Tanaka": ["Old contracts burned in the trash bin.", "An unsigned demo tape with a threatening note."],
+      "Rika Tanabe": ["Receipt for a large sum of hush money.", "Someone tampered with the security footage near the produce aisle."]
+    }
+  };
+
+  let playerCount = 0;
+  const maxPlayers = 6;
+  const playerInputsDiv = document.getElementById("playerInputs");
+  const addPlayerBtn = document.getElementById("addPlayerBtn");
+
+  function createPlayerBlock(index) {
+    const div = document.createElement("div");
+    div.classList.add("player-block");
+    div.innerHTML = `
+      <h3>Player ${index + 1}</h3>
+      <label for="name_${index}">Name:</label>
+      <input type="text" id="name_${index}" name="name" required />
+      <label for="age_${index}">Age:</label>
+      <input type="number" id="age_${index}" name="age" min="1" max="120" required />
+      <label for="gender_${index}">Gender:</label>
+      <select id="gender_${index}" name="gender" required>
+        <option value="" disabled selected>Select gender</option>
+        <option>Male</option>
+        <option>Female</option>
+        <option>Non-binary</option>
+        <option>Other</option>
+        <option>Prefer not to say</option>
+      </select>
+      <label for="ethnicity_${index}">Ethnicity:</label>
+      <input type="text" id="ethnicity_${index}" name="ethnicity" required />
+      <label for="hair_${index}">Hair Color:</label>
+      <input type="text" id="hair_${index}" name="hair" required />
+      <label for="eyes_${index}">Eye Color:</label>
+      <input type="text" id="eyes_${index}" name="eyes" required />
+      <label for="job_${index}">Job:</label>
+      <input type="text" id="job_${index}" name="job" required />
+      <label for="relation_${index}">Relationship to Victim:</label>
+      <input type="text" id="relation_${index}" name="relation" required />
+      <label for="secret_${index}">Secret:</label>
+      <textarea id="secret_${index}" name="secret" rows="2" required></textarea>
+      <label for="motive_${index}">Motive:</label>
+      <textarea id="motive_${index}" name="motive" rows="2" required></textarea>
+    `;
+    return div;
+  }
+
+  function addPlayerInputs() {
+    if (playerCount >= maxPlayers) return;
+    playerInputsDiv.appendChild(createPlayerBlock(playerCount));
+    playerCount++;
+    if (playerCount === maxPlayers) addPlayerBtn.disabled = true;
+  }
+
+  for (let i = 0; i < 3; i++) addPlayerInputs();
+
+  function generateCustomMystery() {
+    const form = document.getElementById("characterForm");
+    const characters = [];
+    for (let i = 0; i < playerCount; i++) {
+      const name = form.querySelector(`#name_${i}`).value.trim();
+      const age = form.querySelector(`#age_${i}`).value.trim();
+      const gender = form.querySelector(`#gender_${i}`).value;
+      const ethnicity = form.querySelector(`#ethnicity_${i}`).value.trim();
+      const hair = form.querySelector(`#hair_${i}`).value.trim();
+      const eyes = form.querySelector(`#eyes_${i}`).value.trim();
+      const job = form.querySelector(`#job_${i}`).value.trim();
+      const relation = form.querySelector(`#relation_${i}`).value.trim();
+      const secret = form.querySelector(`#secret_${i}`).value.trim();
+      const motive = form.querySelector(`#motive_${i}`).value.trim();
+      const trait = personalityTraits[Math.floor(Math.random() * personalityTraits.length)];
+      characters.push({ name, age, gender, ethnicity, hair, eyes, job, relation, secret, motive, trait });
+    }
+
+    const setting = settings[Math.floor(Math.random() * settings.length)];
+    const backstory = backstories[setting] || "Someone wanted the victim dead, but the why remains hidden.";
+    const victim = { ...victims[Math.floor(Math.random() * victims.length)] };
+    victim.trait = personalityTraits[Math.floor(Math.random() * personalityTraits.length)];
+
+    let cluesSelected = [...cluePool.general];
+    const traitClues = cluePool.traits[victim.trait] || [];
+    const victimClues = cluePool.victims[victim.name] || [];
+    cluesSelected = cluesSelected.concat(traitClues, victimClues).sort(() => 0.5 - Math.random()).slice(0, 5);
+
+    const killer = characters[Math.floor(Math.random() * characters.length)];
+
+    const outputHTML = `
+      <h2>Setting:</h2><p>${setting}</p>
+      <h2>Victim Profile:</h2>
+      <p><strong>${victim.name}</strong> (${victim.age} yrs, ${victim.gender})<br>
+      Job: ${victim.job}<br>
+      Known For: ${victim.notes}<br>
+      Personality: ${victim.trait}</p>
+      <h2>Backstory:</h2><p>${backstory}</p>
+      <h2>Characters:</h2>
+      ${characters.map(c => `<p><strong>${c.name}</strong> (${c.age} yrs, ${c.gender}, ${c.ethnicity})<br>
+        Hair: ${c.hair}, Eyes: ${c.eyes}<br>
+        Job: ${c.job}<br>
+        Relationship to victim: ${c.relation}<br>
+        Personality: ${c.trait}<br>
+        Secret: ${c.secret}<br>
+        Motive: ${c.motive}</p><hr>`).join('')}
+      <h2>Clues:</h2><ul>${cluesSelected.map(clue => `<li>${clue}</li>`).join('')}</ul>
+      <h2>Instructions:</h2><p>Each player receives a role. Reveal clues one by one. After the last clue, guess who the killer is. Then reveal the final solution.</p>
+      <h2>Final Reveal:</h2><p><strong>${killer.name}</strong> is the killer. Motive: ${killer.motive}</p>`;
+
+    document.getElementById("output").innerHTML = outputHTML;
+  }
+
+  function downloadPDF() {
+    const content = document.getElementById("output").innerText;
+    const blob = new Blob([content], { type: "application/pdf" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "murder_mystery.pdf";
+    link.click();
+  }
+</script>
